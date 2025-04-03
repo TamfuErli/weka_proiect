@@ -67,11 +67,24 @@ public class csvCleanToArff {
             loader.setSource(new File(outputFileCSV));
             Instances dataInstances = loader.getDataSet();
 
-            // Configurar la columna de clase (sentiment)
-            dataInstances.setClassIndex(0);
+            // Configurar atributos
+            ArrayList<Attribute> attributes = new ArrayList<>();
+            attributes.add(new Attribute("TweetText", (List<String>) null)); // Atributo de tipo texto
+            ArrayList<String> classValues = new ArrayList<>(sentimentClasses);
+            attributes.add(new Attribute("sentiment", classValues));
+
+            Instances newData = new Instances("tweets", attributes, data.size());
+            newData.setClassIndex(1);
+
+            for (String[] entry : data) {
+                DenseInstance instance = new DenseInstance(2);
+                instance.setValue(newData.attribute("TweetText"), entry[1]);
+                instance.setValue(newData.attribute("sentiment"), entry[0]);
+                newData.add(instance);
+            }
 
             ArffSaver saver = new ArffSaver();
-            saver.setInstances(dataInstances);
+            saver.setInstances(newData);
             saver.setFile(new File(outputFileARFF));
             saver.writeBatch();
 
@@ -81,5 +94,3 @@ public class csvCleanToArff {
         }
     }
 }
-
-
