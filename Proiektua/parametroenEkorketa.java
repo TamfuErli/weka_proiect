@@ -22,17 +22,17 @@ import java.io.IOException;
 
 public class parametroenEkorketa {
     public static void main(String[] args) throws Exception {
-        DataSource source = new DataSource("minimal.arff");
+        DataSource source = new DataSource(args[0]);
         Instances data = source.getDataSet();
         if (data.classIndex() == -1) {
-            data.setClassIndex(0);
+            data.setClassIndex(data.numAttributes() - 1);
         }
 
         // Search algorithm list
         String[] searchAlgorithms = {"K2", "HillClimber", "TabuSearch"};
 
         double[] alphas = {0.1, 0.5, 1.0};
-        int[] parents = {1,2,3};
+        int[] parents = {1,2,3,4,5};
         double bestFMeasure = -1;
         String estimatorName = null;
         String bestSAlgorithm = null;
@@ -43,11 +43,19 @@ public class parametroenEkorketa {
 
         for (String searchAlgorithm : searchAlgorithms) {
             for (int j=1;j<parents.length+1 ; j++) {
-                for (double alpha : alphas) {
+                for(int i=0; i<2; i++) {
+                    for (double alpha : alphas) {
                         iteraciones++;
                         try {
-                            SimpleEstimator estimator = new SimpleEstimator();
-                            estimatorName = "SimpleEstimator";
+                            BayesNetEstimator estimator = null;
+                            if (i == 0){
+                                estimator = new SimpleEstimator();
+                                estimatorName = "SimpleEstimator";
+                            } else if (i == 1) {
+                                estimator = new MultiNomialBMAEstimator();
+                                estimatorName = "MultiNomialBMAEstimator";
+                            }
+
                             Randomize randomize = new Randomize();
                             randomize.setInputFormat(data);
                             Instances randomizedData = Filter.useFilter(data, randomize);
@@ -95,6 +103,7 @@ public class parametroenEkorketa {
                         } catch (Exception e) {}
                     }
                 }
+            }
         }
         System.out.println("Iteraciones: " + iteraciones);
         try (FileWriter writer = new FileWriter("parametroak.txt")) {
