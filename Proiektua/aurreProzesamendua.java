@@ -2,10 +2,10 @@ package Proiektua;
 
 import weka.attributeSelection.InfoGainAttributeEval;
 import weka.attributeSelection.Ranker;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
+import weka.core.converters.ConverterUtils;
 import weka.core.stopwords.Rainbow;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.AttributeSelection;
@@ -28,15 +28,17 @@ public class aurreProzesamendua {
             String csvTrain = args[0];
             String csvTrainMoldatua = args [1];
             String trainArff = args[2];
-            Instances trainRaw = convertCSVtoARFF(csvTrain, csvTrainMoldatua);
+            CSVtoARFFTest.convert(csvTrain, csvTrainMoldatua, trainArff);
+            ConverterUtils.DataSource src = new ConverterUtils.DataSource(trainArff);
+            Instances trainARFF= src.getDataSet();
             String hiztegi = args [3];
             String train_bow_fitx = args[4];
             String train_bow_fss_fitx = args[5];
             String hiztegiBerria = args[6];
 
-            trainRaw.setClassIndex(1);
-            fitxategiakGorde(trainRaw, trainArff);
-            Instances train_bow = createBagOfWords(trainRaw, hiztegi);
+            trainARFF.setClassIndex(1);
+            fitxategiakGorde(trainARFF, trainArff);
+            Instances train_bow = createBagOfWords(trainARFF, hiztegi);
             fitxategiakGorde(train_bow, train_bow_fitx);
             seleccionFSS(train_bow, hiztegi, hiztegiBerria, train_bow_fss_fitx);
 
@@ -47,33 +49,6 @@ public class aurreProzesamendua {
         }
     }
 
-
-    public static Instances convertCSVtoARFF (String csvPath, String csvMoldatua)
-        throws Exception {
-
-        Path csv = Path.of(csvPath);
-        String edukia = Files.readString(csv);
-        String edukiaMoldatuta = edukia.replaceAll("http\\S+|@\\w+|#|\\W", "");
-
-        FileWriter fw = new FileWriter(csvMoldatua);
-        fw.write(edukiaMoldatuta);
-        fw.close();
-
-        CSVLoader loader = new CSVLoader();
-        loader.setSource(new File(csvMoldatua));
-        Instances dataArff = loader.getDataSet();
-
-        dataArff.setClassIndex(1);
-
-        dataArff.renameAttribute(0, "gaiaAtr");
-        dataArff.renameAttribute(1, "konnotazioAtr");
-        dataArff.renameAttribute(2, "idAtr");
-        dataArff.renameAttribute(3, "dataAtr");
-        dataArff.renameAttribute(4, "textuAtr");
-
-        return dataArff;
-
-    }
 
     public static Instances createBagOfWords(Instances dataRaw, String dictionaryPath)
             throws Exception{
