@@ -16,13 +16,13 @@ public class BoW {
             Instances data = source.getDataSet();
 
             // Configurar la columna de clase (sentiment)
-            data.setClassIndex(data.numAttributes() - 1);
+            data.setClassIndex(data.numAttributes() - 1); // Suponiendo que la clase es la última columna
 
-            // Aplicar Bag of Words con 5000 palabras
+            // Aplicar Bag of Words solo al atributo de texto (asegurarse que no se afecte a la columna de clase)
             StringToWordVector filter = new StringToWordVector();
-            filter.setWordsToKeep(5000);
-            filter.setLowerCaseTokens(true);
-            filter.setAttributeIndices("first"); // Aplicar al atributo de texto
+            filter.setWordsToKeep(5000); // Limitar el número de palabras
+            filter.setLowerCaseTokens(true); // Convertir a minúsculas
+            filter.setAttributeIndices("first-last-1"); // Esto aplica solo a las columnas de texto, no a la clase
             filter.setInputFormat(data);
 
             Instances newData = Filter.useFilter(data, filter);
@@ -38,3 +38,4 @@ public class BoW {
         }
     }
 }
+

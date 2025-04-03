@@ -22,10 +22,10 @@ import java.io.IOException;
 
 public class parametroenEkorketa {
     public static void main(String[] args) throws Exception {
-        DataSource source = new DataSource(args[0]);
+        DataSource source = new DataSource("tweets_bow_filtered.arff");
         Instances data = source.getDataSet();
         if (data.classIndex() == -1) {
-            data.setClassIndex(data.numAttributes() - 1);
+            data.setClassIndex(0);
         }
 
         // Search algorithm list
