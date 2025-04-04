@@ -7,8 +7,8 @@ import weka.filters.unsupervised.attribute.StringToWordVector;
 
 public class BoW {
     public static void main(String[] args) {
-        String inputFileARFF = "tweets.arff"; // Archivo ARFF de entrada
-        String outputFileARFF = "tweets_bow.arff"; // Archivo ARFF de salida con Bag of Words
+        String inputFileARFF = args[0]; // Archivo ARFF de entrada
+        String outputFileARFF = args[1]; // Archivo ARFF de salida con Bag of Words
 
         try {
             // Cargar el archivo ARFF

@@ -17,7 +17,7 @@ public class Baseline {
 
     public static void main(String args[]) {
         try {
-            String trainRawPath = args[0];
+            //String trainRawPath = args[0];
             String trainBowFss = args[1];
             String hiztegi = args[2];
             String devCsv= args[3];
@@ -25,21 +25,30 @@ public class Baseline {
             String ebaluazioa = args[5];
             String predictionsPath = args[6];
             String devCsvOna = args[7];
+            String csvArff = args[8];
 
+//
+            DataSource src = new DataSource(trainBowFss);
+            Instances train_bow_fss = src.getDataSet();
+            train_bow_fss.setClassIndex(0);
 
-            DataSource src = new DataSource(trainRawPath);
-            Instances trainRaw = src.getDataSet();
-            trainRaw.setClassIndex(2);
-
-            Instances train_bow_fss = aurreProzesamendua.totalFSS(trainRaw, hiztegi);
-            train_bow_fss.setClassIndex(2);
-
-            int minClassIndex = InferentziaOptimzatu.klaseMinoritarioa(train_bow_fss);
-
-            Instances devRaw = aurreProzesamendua.convertCSVtoARFF(devCsv, devCsvOna);
-            Instances dev_bow_fss = aurreProzesamendua.totalFSS(devRaw, hiztegi);
+            //klase minoritarioa ateratzeko
+            int[] classCounts = train_bow_fss.attributeStats(train_bow_fss.classIndex()).nominalCounts;
+            if (classCounts == null || classCounts.length == 0) {
+                throw new Exception("No class values found");
+            }
+            int minClassIndex = 0;
+            int minCount = Integer.MAX_VALUE;
+            for (int n = 0; n < classCounts.length; n++) {
+                if (classCounts[n] < minCount) {
+                    minCount = classCounts[n];
+                    minClassIndex = n;
+                }
+            }
+            Instances devRaw = csvCleanToArff.bihurketaArff(devCsv, devCsvOna, csvArff);
+            Instances dev_bow_fss = FssDevTest.applyFssWithDictionary(devRaw, hiztegi);
             dev_bow_fss.setClassIndex(2);
-
+//
 
             NaiveBayes nb = new NaiveBayes();
             nb.buildClassifier(train_bow_fss);

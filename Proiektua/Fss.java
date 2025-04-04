@@ -1,85 +1,96 @@
-package proiektua;
+package Proiektua;
 import weka.core.*;
-import weka.attributeSelection.*;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.core.converters.ArffSaver;
 
+import weka.attributeSelection.InfoGainAttributeEval;
+import weka.attributeSelection.Ranker;
+import weka.core.Attribute;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
+import weka.core.converters.CSVLoader;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.AttributeSelection;
+import weka.filters.supervised.instance.Resample;
+import weka.filters.unsupervised.attribute.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Fss {
 
     public static void main(String[] args) {
         try {
             // Cargar archivo ARFF
-            String filePath = "tweets_bow.arff";  // Cambia la ruta según sea necesario
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String inputArff =args[0];  // Cambia la ruta según sea necesario
+            String outputPath = args[1];
+            String hiztegiBerria = args[2];
+
+            BufferedReader reader = new BufferedReader(new FileReader(inputArff));
+
             Instances data = new Instances(reader);
             reader.close();
 
             // Establecer el índice de la clase (si es necesario)
-            data.setClassIndex(0); // Suponiendo que la última columna es la clase
+            AttributeSelection filter = createAttributeFilter(2000); // 2000 mejores atributos
 
-            // Selección de atributos basada en InfoGain
-            InfoGainAttributeEval eval = new InfoGainAttributeEval();
-            Ranker search = new Ranker();
-            search.setNumToSelect(2000); // Seleccionamos los 2000 atributos más importantes (ajusta según sea necesario)
-            AttributeSelection attrSelect = new AttributeSelection();
-            attrSelect.setEvaluator(eval);
-            attrSelect.setSearch(search);
+            // Aplicar filtro
+            filter.setInputFormat(data);
+            Instances filteredData = filter.useFilter(data, filter);
 
-            // Realizar la selección de atributos
-            attrSelect.SelectAttributes(data);
+            // Guardar resultados
+            saveArff(filteredData, outputPath);
+            saveDictionary(filteredData, hiztegiBerria);
 
-            // Obtener los atributos seleccionados
-            int[] selectedAttributes = attrSelect.selectedAttributes();
-            System.out.println("Atributos seleccionados: ");
-            for (int idx : selectedAttributes) {
-                System.out.print(idx + " ");
-            }
-            System.out.println();
-
-            // Filtrar las instancias con los atributos seleccionados
-            Remove remove = new Remove();
-            StringBuilder indicesToRemove = new StringBuilder();
-            for (int i = 0; i < data.numAttributes(); i++) {
-                boolean isSelected = false;
-                for (int selectedIdx : selectedAttributes) {
-                    if (i == selectedIdx) {
-                        isSelected = true;
-                        break;
-                    }
-                }
-                if (!isSelected) {
-                    indicesToRemove.append(i + 1).append(",");
-                }
-            }
-            System.out.println("Índices de atributos a eliminar: " + indicesToRemove.toString());
-
-            // Eliminar atributos no seleccionados
-            if (indicesToRemove.length() > 0) {
-                indicesToRemove.setLength(indicesToRemove.length() - 1);  // Eliminar la última coma
-                remove.setAttributeIndices(indicesToRemove.toString());
-                remove.setInputFormat(data);
-                Instances filteredData = Filter.useFilter(data, remove);
-
-                // Guardar los datos filtrados en un archivo ARFF
-                saveArff(filteredData, "tweets_bow_filtered.arff");
-            }
+            System.out.println("\nProceso completado:");
+            System.out.println("- ARFF filtrado guardado en: " + outputPath);
+            System.out.println("- Diccionario óptimo guardado en: " + hiztegiBerria);
+            System.out.println("\nDatos filtrados:");
+            System.out.println(filteredData.toSummaryString());
 
         } catch (Exception e) {
+            System.err.println("Error durante el procesamiento:");
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
-    // Método para guardar las instancias filtradas en un archivo ARFF
+    private static AttributeSelection createAttributeFilter(int numAttributes) throws Exception {
+        InfoGainAttributeEval evaluator = new InfoGainAttributeEval();
+        Ranker ranker = new Ranker();
+        ranker.setNumToSelect(numAttributes);
+        ranker.setGenerateRanking(true); // Opcional: para generar ranking completo
+
+        AttributeSelection filter = new AttributeSelection();
+        filter.setEvaluator(evaluator);
+        filter.setSearch(ranker);
+
+        return filter;
+    }
+
+    private static void saveDictionary(Instances data, String fileName) throws Exception {
+        try (FileWriter fw = new FileWriter(fileName)) {
+            // Excluimos el atributo de clase
+            int classIndex = data.classIndex();
+
+            for (int i = 0; i < data.numAttributes(); i++) {
+                if (i != classIndex) {
+                    fw.write(data.attribute(i).name() + "\n");
+                }
+            }
+        }
+        System.out.println("Diccionario con " + (data.numAttributes() - 1) + " términos guardado.");
+    }
+
     public static void saveArff(Instances data, String fileName) throws Exception {
         ArffSaver saver = new ArffSaver();
         saver.setInstances(data);
         saver.setFile(new File(fileName));
-        saver.writeBatch();  // Escribir las instancias en el archivo ARFF
-        System.out.println("Archivo ARFF guardado en: " + fileName);
+        saver.writeBatch();
     }
 }

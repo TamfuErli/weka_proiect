@@ -1,5 +1,8 @@
 package Proiektua;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import weka.core.*;
 import weka.core.converters.CSVLoader;
@@ -7,90 +10,119 @@ import weka.core.converters.ArffSaver;
 
 public class csvCleanToArff {
     public static void main(String[] args) {
-        String inputFile = "tweetSentimentdev.csv.csv"; // Archivo de entrada
-        String outputFileCSV = "cleaned_tweets.csv"; // Archivo CSV de salida
-        String outputFileARFF = "tweets.arff"; // Archivo ARFF de salida
+        try {
+            if (args.length < 3) {
+                System.out.println("Uso: java csvCleanToArff <inputCSV> <outputCSV> <outputARFF>");
+                return;
+            }
 
+            String csvTrain = args[0];       // Archivo CSV de entrada
+            String csvTrainMoldatua = args[1]; // Archivo CSV procesado de salida
+            String trainFileARFF = args[2];   // Archivo ARFF de salida
+
+            // Llamar al método de conversión
+            Instances arffTrain = bihurketaArff(csvTrain, csvTrainMoldatua, trainFileARFF);
+
+            // Opcional: Mostrar información sobre los datos convertidos
+            System.out.println("\nDatos convertidos a ARFF:");
+            System.out.println(arffTrain.toSummaryString());
+
+        } catch(Exception e) {
+            System.err.println("Error en el proceso:");
+            e.printStackTrace();
+        }
+    }
+
+    public static Instances bihurketaArff(String inputFilePath, String outputCSVPath, String outputARFFPath) throws Exception {
         List<String[]> data = new ArrayList<>();
         Set<String> sentimentClasses = new HashSet<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
-             BufferedWriter bwCSV = new BufferedWriter(new FileWriter(outputFileCSV))) {
+        // Leer el archivo CSV original y procesarlo
+        try (BufferedReader br = Files.newBufferedReader(Path.of(inputFilePath));
+             FileWriter fw = new FileWriter(outputCSVPath);
+             BufferedWriter bw = new BufferedWriter(fw)) {
 
-            String header = br.readLine(); // Leer encabezado
-            if (header == null) return;
+            // Leer encabezado
+            String header = br.readLine();
+            if (header == null) {
+                throw new IOException("El archivo está vacío");
+            }
 
-            String[] headers = header.split(",");
+            // Identificar índices de columnas
+            String[] headers = header.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1); // Regex para manejar comas dentro de comillas
             int sentimentIndex = -1;
             int tweetTextIndex = -1;
 
             for (int i = 0; i < headers.length; i++) {
-                if (headers[i].trim().equalsIgnoreCase("\"Sentiment\"")) {
+                String headerName = headers[i].trim().replace("\"", "");
+                if (headerName.equalsIgnoreCase("Sentiment")) {
                     sentimentIndex = i;
-                } else if (headers[i].trim().equalsIgnoreCase("\"TweetText\"")) {
+                } else if (headerName.equalsIgnoreCase("TweetText")) {
                     tweetTextIndex = i;
                 }
             }
 
             if (sentimentIndex == -1 || tweetTextIndex == -1) {
-                System.out.println("No se encontraron las columnas necesarias.");
-                return;
+                throw new IOException("No se encontraron las columnas 'Sentiment' y/o 'TweetText'");
             }
 
-            // Escribir el nuevo encabezado en CSV
-            bwCSV.write("sentiment,TweetText\n");
+            // Escribir nuevo encabezado en CSV
+            bw.write("sentiment,TweetText\n");
 
+            // Procesar cada línea
             String line;
             while ((line = br.readLine()) != null) {
-                String[] columns = line.split(",");
+                String[] columns = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
                 if (columns.length <= Math.max(sentimentIndex, tweetTextIndex)) continue;
 
-                String sentiment = columns[sentimentIndex].trim();
-                String tweetText = columns[tweetTextIndex]
-                        .replaceAll("https?://\\S+", "") // Quita links
-                        .replaceAll("[^a-zA-Z\s]", "") // Quita caracteres no alfabéticos
+                String sentiment = columns[sentimentIndex].trim().replace("\"", "");
+                String tweetText = columns[tweetTextIndex].trim().replace("\"", "")
+                        .replaceAll("https?://\\S+", "")    // Quita links
+                        .replaceAll("[^a-zA-Z\\s]", "")     // Quita caracteres no alfabéticos
+                        .replaceAll("\\s+", " ")            // Normaliza espacios
                         .trim();
 
-                bwCSV.write(sentiment + "," + tweetText + "\n");
+                // Escribir en el CSV procesado
+                bw.write(String.format("\"%s\",\"%s\"%n", sentiment, tweetText));
+
+                // Almacenar datos para ARFF
                 data.add(new String[]{sentiment, tweetText});
                 sentimentClasses.add(sentiment);
             }
 
-            System.out.println("Archivo limpio guardado como " + outputFileCSV);
+            System.out.println("Archivo CSV procesado guardado como: " + outputCSVPath);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new Exception("Error procesando el CSV: " + e.getMessage(), e);
         }
 
-        // Convertir CSV a ARFF con Weka
+        // Crear instancias Weka
+        ArrayList<Attribute> attributes = new ArrayList<>();
+        attributes.add(new Attribute("TweetText", (List<String>) null)); // Atributo de texto
+        ArrayList<String> classValues = new ArrayList<>(sentimentClasses);
+        attributes.add(new Attribute("sentiment", classValues));
+
+        Instances instances = new Instances("tweets", attributes, data.size());
+        instances.setClassIndex(1); // Establecer sentiment como class index
+
+        // Añadir instancias
+        for (String[] entry : data) {
+            DenseInstance instance = new DenseInstance(2);
+            instance.setValue(instances.attribute("TweetText"), entry[1]);
+            instance.setValue(instances.attribute("sentiment"), entry[0]);
+            instances.add(instance);
+        }
+
+        // Guardar ARFF
         try {
-            CSVLoader loader = new CSVLoader();
-            loader.setSource(new File(outputFileCSV));
-            Instances dataInstances = loader.getDataSet();
-
-            // Configurar atributos
-            ArrayList<Attribute> attributes = new ArrayList<>();
-            attributes.add(new Attribute("TweetText", (List<String>) null)); // Atributo de tipo texto
-            ArrayList<String> classValues = new ArrayList<>(sentimentClasses);
-            attributes.add(new Attribute("sentiment", classValues));
-
-            Instances newData = new Instances("tweets", attributes, data.size());
-            newData.setClassIndex(1);
-
-            for (String[] entry : data) {
-                DenseInstance instance = new DenseInstance(2);
-                instance.setValue(newData.attribute("TweetText"), entry[1]);
-                instance.setValue(newData.attribute("sentiment"), entry[0]);
-                newData.add(instance);
-            }
-
             ArffSaver saver = new ArffSaver();
-            saver.setInstances(newData);
-            saver.setFile(new File(outputFileARFF));
+            saver.setInstances(instances);
+            saver.setFile(new File(outputARFFPath));
             saver.writeBatch();
-
-            System.out.println("Archivo ARFF guardado como " + outputFileARFF);
+            System.out.println("Archivo ARFF guardado como: " + outputARFFPath);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception("Error guardando ARFF: " + e.getMessage(), e);
         }
+
+        return instances;
     }
 }
