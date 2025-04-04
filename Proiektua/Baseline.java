@@ -30,7 +30,6 @@ public class Baseline {
 //
             DataSource src = new DataSource(trainBowFss);
             Instances train_bow_fss = src.getDataSet();
-            train_bow_fss.setClassIndex(0);
 
             //klase minoritarioa ateratzeko
             int[] classCounts = train_bow_fss.attributeStats(train_bow_fss.classIndex()).nominalCounts;
@@ -47,7 +46,6 @@ public class Baseline {
             }
             Instances devRaw = csvCleanToArff.bihurketaArff(devCsv, devCsvOna, csvArff);
             Instances dev_bow_fss = FssDevTest.applyFssWithDictionary(devRaw, hiztegi);
-            dev_bow_fss.setClassIndex(2);
 //
 
             NaiveBayes nb = new NaiveBayes();
