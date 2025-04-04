@@ -63,7 +63,7 @@ public class Fss {
     private static AttributeSelection createAttributeFilter(int numAttributes) throws Exception {
         InfoGainAttributeEval evaluator = new InfoGainAttributeEval();
         Ranker ranker = new Ranker();
-        ranker.setNumToSelect(numAttributes);
+        ranker.setNumToSelect(1000);
         ranker.setGenerateRanking(true); // Opcional: para generar ranking completo
 
         AttributeSelection filter = new AttributeSelection();

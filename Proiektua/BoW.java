@@ -16,7 +16,6 @@ public class BoW {
             Instances data = source.getDataSet();
 
             // Configurar la columna de clase (sentiment)
-            data.setClassIndex(data.numAttributes() - 1); // Suponiendo que la clase es la última columna
 
             // Aplicar Bag of Words solo al atributo de texto (asegurarse que no se afecte a la columna de clase)
             StringToWordVector filter = new StringToWordVector();
