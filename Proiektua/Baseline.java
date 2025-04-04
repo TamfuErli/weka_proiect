@@ -17,7 +17,7 @@ public class Baseline {
 
     public static void main(String args[]) {
         try {
-            //String trainRawPath = args[0];
+            String trainRawPath = args[0];
             String trainBowFss = args[1];
             String hiztegi = args[2];
             String devCsv= args[3];
@@ -28,8 +28,7 @@ public class Baseline {
             String csvArff = args[8];
 
 //
-            DataSource src = new DataSource(trainBowFss);
-            Instances train_bow_fss = src.getDataSet();
+            Instances train_bow_fss = Fss.applyFSS(trainRawPath, trainBowFss, hiztegi);
 
             //klase minoritarioa ateratzeko
             int[] classCounts = train_bow_fss.attributeStats(train_bow_fss.classIndex()).nominalCounts;

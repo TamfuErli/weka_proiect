@@ -93,4 +93,23 @@ public class Fss {
         saver.setFile(new File(fileName));
         saver.writeBatch();
     }
+
+    public static Instances applyFSS(String inputArff, String outputArff, String dictionaryFile) throws Exception {
+        // Cargar archivo ARFF
+        BufferedReader reader = new BufferedReader(new FileReader(inputArff));
+        Instances data = new Instances(reader);
+        reader.close();
+
+        // Configurar y aplicar filtro
+        AttributeSelection filter = createAttributeFilter(2000);
+        filter.setInputFormat(data);
+        Instances filteredData = filter.useFilter(data, filter);
+        filteredData.setClassIndex(1);
+
+        // Guardar resultados
+        saveArff(filteredData, outputArff);
+        saveDictionary(filteredData, dictionaryFile);
+
+        return filteredData;
+    }
 }
