@@ -1,0 +1,83 @@
+ -----------EZ_ZINTZOA---------------
+=== Confusion Matrix ===
+
+   a   b   c   d   <-- classified as
+ 228  13  78  18 |   a = negative
+  16 846 130  21 |   b = irrelevant
+ 275 130 859 175 |   c = neutral
+  66  25  91 156 |   d = positive
+
+Klasse minoritarioaren f-measure: 0.49457700650759223
+Klasse minoritarioaren precision: 0.38974358974358975
+ -----------10_FOLD_CROSS-VALIDATION---------------=== Confusion Matrix ===
+
+    a    b    c    d   <-- classified as
+  440   27  168   39 |    a = negative
+   32 1690  260   44 |    b = irrelevant
+  546  268 1699  365 |    c = neutral
+  146   50  198  282 |    d = positive
+
+Klasse minoritarioaren f-measure: 0.4787812840043526
+Klasse minoritarioaren precision: 0.37800687285223367
+ -----------REPEATED_STRATIFIED_HOLD_OUT---------------
+7
+
+--- Iteración 2 ---
+Matriz de Confusión:
+=== Confusion Matrix ===
+
+   a   b   c   d   <-- classified as
+ 220  16  81  20 |   a = negative
+  14 850 128  21 |   b = irrelevant
+ 260 135 867 177 |   c = neutral
+  59  25  99 155 |   d = positive
+
+Clase minoritaria - Precisión: 0,3978, Recall: 0,6528, F-measure: 0,4944
+
+--- Iteración 3 ---
+Matriz de Confusión:
+=== Confusion Matrix ===
+
+   a   b   c   d   <-- classified as
+ 212  16  81  28 |   a = negative
+  15 853 126  19 |   b = irrelevant
+ 241 135 913 150 |   c = neutral
+  61  26 102 149 |   d = positive
+
+Clase minoritaria - Precisión: 0,4008, Recall: 0,6291, F-measure: 0,4896
+
+--- Iteración 4 ---
+Matriz de Confusión:
+=== Confusion Matrix ===
+
+   a   b   c   d   <-- classified as
+ 224  13  80  20 |   a = negative
+  17 837 139  20 |   b = irrelevant
+ 280 126 874 159 |   c = neutral
+  69  23 103 143 |   d = positive
+
+Clase minoritaria - Precisión: 0,3797, Recall: 0,6647, F-measure: 0,4833
+
+--- Iteración 5 ---
+Matriz de Confusión:
+=== Confusion Matrix ===
+
+   a   b   c   d   <-- classified as
+ 214  12  88  23 |   a = negative
+  12 853 129  19 |   b = irrelevant
+ 242 133 883 181 |   c = neutral
+  62  26  99 151 |   d = positive
+
+Clase minoritaria - Precisión: 0,4038, Recall: 0,6350, F-measure: 0,4937
+
+=== RESULTADOS PROMEDIO ===
+Matriz de Confusión Promedio:
+218,2	14,6	82,2	22,0	
+14,6	851,0	127,8	19,6	
+256,0	133,0	882,6	167,4	
+64,0	25,2	99,2	149,6	
+
+Clase minoritaria (índice 0):
+Precisión promedio: 0,3951
+Recall promedio: 0,6475
+F-measure promedio: 0,4905
